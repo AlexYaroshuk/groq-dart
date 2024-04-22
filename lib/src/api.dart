@@ -15,7 +15,7 @@ final class ApiHeaderValues {
 }
 
 // Groq API Configuration model
-final class Configuration {
+class Configuration {
   /// The model which will generate the completion.
   /// Some models are suitable for natural language
   /// tasks, others specialize in code.
