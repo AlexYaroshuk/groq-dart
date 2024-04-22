@@ -59,7 +59,7 @@ class Configuration {
     this.temperature = 0.5,
     this.maxTokens = 1024,
     this.topP = 1.0,
-    this.stream = false,
+    this.stream = true,
     this.stop,
   });
 }
