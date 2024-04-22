@@ -36,6 +36,7 @@ class GroqChat {
     _messages.add(message);
     final response = await _sendRequest();
     _messages.add(response.choices.first.message);
+    print(response);
     return response;
   }
 
