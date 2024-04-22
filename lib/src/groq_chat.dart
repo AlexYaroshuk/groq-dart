@@ -47,8 +47,30 @@ class GroqChat {
 
   // Send a request to Groq API
   Future<GroqResponse> _sendRequest() {
-    final request = _generateRequest();
-    return _apiClient.makeRequest(groqRequest: request);
+  final request = _generateRequest();
+  // Assuming makeRequest returns a Future<Stream<String>> for the sake of example
+  Stream<String> responseStream = await _apiClient.makeRequest(groqRequest: request);
+
+  // Prepare to collect chunks of data
+  String fullResponse = '';
+
+  // Await for the full response
+  await for (String chunk in responseStream) {
+    fullResponse += chunk; // Collecting data chunks
+  }
+
+  // Once all chunks are collected, parse the full response
+  // Assuming the full response is a JSON string that needs to be decoded
+  final jsonResponse = jsonDecode(fullResponse);
+  // Now, extract the data from jsonResponse as needed, for example:
+  // Assuming jsonResponse contains a 'data' field that is a list of messages
+  // This part depends on the actual structure of your response
+  var data = jsonResponse['data'];
+
+  // Convert the data into your GroqResponse object
+  GroqResponse groqResponse = GroqResponse.fromData(data); // Adapt this line as necessary
+
+  return groqResponse;
   }
 
   // Create a request with all details (instructions, messages, configurations)
