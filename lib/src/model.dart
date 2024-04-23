@@ -76,7 +76,8 @@ class GroqResponse {
   int created;
   String model;
   List<GroqChoices> choices;
-  GroqUsage usage;
+  GroqUsage? usage; // Make usage nullable
+  String? systemFingerprint; // New field for system fingerprint
 
   GroqResponse({
     required this.id,
@@ -84,7 +85,8 @@ class GroqResponse {
     required this.created,
     required this.model,
     required this.choices,
-    required this.usage,
+    this.usage, // Adjust constructor for nullable usage
+    this.systemFingerprint,
   });
 
   factory GroqResponse.fromJson(Map<String, dynamic> json) {
@@ -98,19 +100,11 @@ class GroqResponse {
           (choice) => GroqChoices.fromJson(choice as Map<String, dynamic>),
         ),
       ),
-      usage: GroqUsage.fromJson(json['usage'] as Map<String, dynamic>),
+      usage: json['usage'] != null
+          ? GroqUsage.fromJson(json['usage'] as Map<String, dynamic>)
+          : null,
+      systemFingerprint: json['system_fingerprint'] as String?,
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'object': object,
-      'created': created,
-      'model': model,
-      'choices': choices.map((choice) => choice.toJson()).toList(),
-      'usage': usage.toJson(),
-    };
   }
 }
 
@@ -126,10 +120,13 @@ class GroqMessage {
     required this.content,
   });
 
-  GroqMessage.fromJson(Map<String, dynamic> json)
-      : role = RoleMessage.values.firstWhere(
-            (element) => element.toString().split('.').last == json['role']),
-        content = json['content'] as String;
+  // Update fromJson constructor to handle delta structure
+GroqMessage.fromJson(Map<String, dynamic> json)
+    : role = RoleMessage.values.firstWhere(
+          (element) => element.toString().split('.').last == (json['role'] ?? json['delta']?['role']),
+          orElse: () => RoleMessage.assistant // Provide a default value or handle appropriately
+      ),
+      content = json['content'] as String? ?? json['delta']?['content'] as String? ?? '';
 
   Map<String, dynamic> toJson() => {
         'role': role.name,
@@ -142,23 +139,26 @@ class GroqMessage {
 //
 class GroqChoices {
   int index;
-  GroqMessage message;
+  GroqMessage? message; // Make message nullable
 
   GroqChoices({
     required this.index,
-    required this.message,
+    this.message, // Adjust constructor
   });
 
   factory GroqChoices.fromJson(Map<String, dynamic> json) {
     return GroqChoices(
       index: json['index'] as int,
-      message: GroqMessage.fromJson(json['message'] as Map<String, dynamic>),
+      message: json.containsKey('delta')
+          ? GroqMessage.fromJson(json['delta'] as Map<String, dynamic>)
+          : null,
     );
   }
 
   Map<String, dynamic> toJson() => {
         'index': index,
-        'message': message,
+        'message':
+            message?.toJson(), // Safely call toJson() if message is not null
       };
 }
 

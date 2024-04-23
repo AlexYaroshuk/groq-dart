@@ -136,39 +136,72 @@ class ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  _sendMessage(String text) async {
-    try {
-      GroqResponse response = await _groq.sendMessage(text);
+  void _sendMessage(String text) {
+    print('input is $text');
+    _textController.clear();
 
-      ChatMessage responseMessage = ChatMessage(
-        text: response.choices.first.message.content,
-        isUserMessage: false,
-      );
+    ChatMessage? lastResponseMessage;
 
-      setState(() {
-        _messages.add(responseMessage);
-      });
-    } on GroqException catch (error) {
-      ErrorMessage errorMessage = ErrorMessage(
-        text: error.message,
-      );
+    // Start listening to the stream of messages
+    _groq.sendStreamedMessage(text).listen(
+      (message) {
+        print(
+            "New message received: ${message.content}"); // Debug: Ensure we're getting here
+        if (message.content.isNotEmpty) {
+          if (lastResponseMessage == null) {
+            // First message received, create a new ChatMessage and keep a reference to it
+            lastResponseMessage = ChatMessage(
+              text: message.content,
+              isUserMessage: false,
+            );
+            setState(() {
+              _messages.add(lastResponseMessage!);
+            });
+          } else {
+            // Create a new instance with updated text
+            final updatedMessage = ChatMessage(
+              text: lastResponseMessage!.text + message.content,
+              isUserMessage: false,
+            );
+            setState(() {
+              // Replace the last message with the updated one
+              _messages.removeLast();
+              _messages.add(updatedMessage);
+              lastResponseMessage = updatedMessage; // Update the reference
+            });
+          }
+        }
+      },
+      onError: (error) {
+        print("Error receiving message: $error"); // Debug: Print any errors
+        ErrorMessage errorMessage = ErrorMessage(
+          text: error.toString(),
+        );
 
-      setState(() {
-        _messages.add(errorMessage);
-      });
-    }
-    _scrollToBottomWithDelay(
-      const Duration(milliseconds: 300),
+        setState(() {
+          _messages.add(errorMessage);
+        });
+      },
+      // Optionally handle stream completion
+      onDone: () {
+        print("Stream completed"); // Debug: Confirm the stream completion
+        // Handle completion of the stream if necessary
+        lastResponseMessage = null; // Reset for the next message
+      },
     );
   }
 }
 
 class ChatMessage extends StatelessWidget {
-  final String text;
+  String text;
   final bool isUserMessage;
 
-  const ChatMessage(
-      {super.key, required this.text, this.isUserMessage = false});
+  ChatMessage({super.key, required this.text, this.isUserMessage = false});
+
+  // Add a method to update text
+  void updateText(String newText) {
+    text = newText;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -211,7 +244,7 @@ class ChatMessage extends StatelessWidget {
 }
 
 class ErrorMessage extends ChatMessage {
-  const ErrorMessage({super.key, required super.text});
+  ErrorMessage({super.key, required super.text});
 
   @override
   Widget build(BuildContext context) {

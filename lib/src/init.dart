@@ -52,8 +52,13 @@ final class Groq {
     _chat.clearChat();
   }
 
-  // Send a message tot the chat
-  Future<GroqResponse> sendMessage(String message) {
-    return _chat.sendMessage(message);
+// Adjusted to match the new signature of sendMessage in GroqChat
+Future<void> sendMessage(String message) {
+  return _chat.sendMessage(message);
+}
+
+  // Forwarding method to send a streamed message
+  Stream<GroqMessage> sendStreamedMessage(String message) {
+    return _chat.sendStreamedMessage(message);
   }
 }
