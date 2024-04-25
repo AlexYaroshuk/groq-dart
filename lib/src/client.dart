@@ -44,11 +44,14 @@ final class ApiClient {
     }
   }
 } else {
-    // Log error status code and response body for debugging
-    final errorMessage = await streamedResponse.stream.bytesToString();
-    print("Error response: $errorMessage");
-    // Throw a generic exception with the error message
-    throw Exception(errorMessage);
+     // Log error status code and response body for debugging
+      final errorMessage = await streamedResponse.stream.bytesToString();
+      print("Error response: $errorMessage");
+      // Use the original error handling method
+      throw parseErrorFor(
+        streamedResponse.statusCode,
+        jsonDecode(errorMessage) as Map<String, dynamic>,
+      );
 }
   }
 }

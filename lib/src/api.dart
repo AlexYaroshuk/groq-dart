@@ -24,7 +24,7 @@ class Configuration {
   String get modelName {
     switch (model) {
       case GroqModel.meta:
-        return 'llama2-70b-4096';
+        return 'llama3-70b-8192';
       case GroqModel.mixtral:
         return 'mixtral-8x7b-32768';
       case GroqModel.gemma:
